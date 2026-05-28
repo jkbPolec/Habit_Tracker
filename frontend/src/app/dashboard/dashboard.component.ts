@@ -55,16 +55,22 @@ import {
           <h2>Daily completions</h2>
           <span>Last 14 days</span>
         </div>
-        <div class="bar-chart">
-          @for (day of dailyStats(); track day.date) {
-            <div class="bar-item">
-              <span class="bar-value">{{ day.completions }}</span>
-              <div class="bar-track">
-                <div class="bar-fill" [style.height.%]="chartHeight(day.completions)"></div>
-              </div>
-              <span class="bar-label">{{ formatChartDate(day.date) }}</span>
-            </div>
-          }
+        <div class="line-chart">
+          <svg viewBox="0 0 720 220" role="img" aria-label="Daily completions line chart">
+            <line class="chart-grid" x1="30" y1="180" x2="700" y2="180"></line>
+            <line class="chart-grid" x1="30" y1="110" x2="700" y2="110"></line>
+            <line class="chart-grid" x1="30" y1="40" x2="700" y2="40"></line>
+            <polyline class="chart-line" [attr.points]="linePoints()"></polyline>
+            @for (point of chartPoints(); track point.date) {
+              <circle class="chart-point" [attr.cx]="point.x" [attr.cy]="point.y" r="5"></circle>
+              <text class="chart-value" [attr.x]="point.x" [attr.y]="point.y - 12">{{ point.completions }}</text>
+            }
+          </svg>
+          <div class="line-labels">
+            @for (day of dailyStats(); track day.date) {
+              <span>{{ formatChartDate(day.date) }}</span>
+            }
+          </div>
         </div>
       </section>
 
@@ -298,9 +304,25 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  chartHeight(completions: number): number {
-    const max = Math.max(...this.dailyStats().map(day => day.completions), 1);
-    return completions === 0 ? 4 : Math.max(12, (completions / max) * 100);
+  chartPoints(): Array<{ date: string; completions: number; x: number; y: number }> {
+    const stats = this.dailyStats();
+    if (!stats.length) {
+      return [];
+    }
+    const max = Math.max(...stats.map(day => day.completions), 1);
+    const step = stats.length === 1 ? 0 : 670 / (stats.length - 1);
+    return stats.map((day, index) => ({
+      date: day.date,
+      completions: day.completions,
+      x: 30 + step * index,
+      y: 180 - (day.completions / max) * 140
+    }));
+  }
+
+  linePoints(): string {
+    return this.chartPoints()
+      .map(point => `${point.x},${point.y}`)
+      .join(' ');
   }
 
   formatChartDate(date: string): string {
