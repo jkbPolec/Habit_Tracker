@@ -23,6 +23,7 @@ import com.example.habittracker.event.HabitUncompletedEvent;
 import com.example.habittracker.event.HabitUpdatedEvent;
 import com.example.habittracker.exception.DuplicateCompletionException;
 import com.example.habittracker.exception.ForbiddenResourceException;
+import com.example.habittracker.exception.InactiveHabitException;
 import com.example.habittracker.exception.ResourceNotFoundException;
 import com.example.habittracker.mapper.HabitCompletionMapper;
 import com.example.habittracker.mapper.HabitMapper;
@@ -179,6 +180,17 @@ class HabitServiceTest {
 
         assertThatThrownBy(() -> habitService.completeHabit(10L, new HabitCompletionRequest(today, null)))
                 .isInstanceOf(DuplicateCompletionException.class);
+    }
+
+    @Test
+    void completeHabit_shouldThrowExceptionWhenHabitIsInactive() {
+        Habit habit = habit(10L, currentUser);
+        habit.setActive(false);
+        LocalDate today = LocalDate.now();
+        when(habitRepository.findById(10L)).thenReturn(Optional.of(habit));
+
+        assertThatThrownBy(() -> habitService.completeHabit(10L, new HabitCompletionRequest(today, null)))
+                .isInstanceOf(InactiveHabitException.class);
     }
 
     @Test

@@ -286,6 +286,21 @@ nav,
   white-space: nowrap;
 }
 
+.status {
+  align-items: center;
+  border: 1px solid #cfd6dd;
+  border-radius: 8px;
+  display: inline-flex;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0.55rem 0.8rem;
+}
+
+.inactive-status {
+  background: #f0f2f4;
+  color: #697680;
+}
+
 .habit-meta {
   color: #4f5d69;
   display: grid;

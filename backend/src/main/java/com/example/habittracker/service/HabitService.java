@@ -17,6 +17,7 @@ import com.example.habittracker.event.HabitUncompletedEvent;
 import com.example.habittracker.event.HabitUpdatedEvent;
 import com.example.habittracker.exception.DuplicateCompletionException;
 import com.example.habittracker.exception.ForbiddenResourceException;
+import com.example.habittracker.exception.InactiveHabitException;
 import com.example.habittracker.exception.ResourceNotFoundException;
 import com.example.habittracker.mapper.HabitCompletionMapper;
 import com.example.habittracker.mapper.HabitMapper;
@@ -116,6 +117,9 @@ public class HabitService {
     @Transactional
     public HabitCompletionResponse completeHabit(Long id, HabitCompletionRequest request) {
         Habit habit = getOwnedHabit(id);
+        if (!habit.isActive()) {
+            throw new InactiveHabitException("Inactive habit cannot be completed");
+        }
         if (completionRepository.existsByHabitIdAndCompletionDate(id, request.completionDate())) {
             throw new DuplicateCompletionException("Habit is already completed for this date");
         }

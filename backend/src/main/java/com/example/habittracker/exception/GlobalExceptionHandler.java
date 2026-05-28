@@ -45,6 +45,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "Duplicate completion", ex.getMessage(), request, Map.of());
     }
 
+    @ExceptionHandler(InactiveHabitException.class)
+    public ResponseEntity<ApiErrorResponse> handleInactiveHabit(InactiveHabitException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Inactive habit", ex.getMessage(), request, Map.of());
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiErrorResponse> handleInvalidCredentials(
             InvalidCredentialsException ex,

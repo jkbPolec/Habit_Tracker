@@ -119,7 +119,9 @@ import {
                 <span>Best {{ habit.bestStreak }}</span>
               </div>
               <div class="actions wrap">
-                @if (habit.completedToday) {
+                @if (!habit.active) {
+                  <span class="status inactive-status">Inactive</span>
+                } @else if (habit.completedToday) {
                   <button type="button" (click)="undoToday(habit)">Undo today</button>
                 } @else {
                   <button class="primary" type="button" (click)="completeToday(habit)">Done today</button>
