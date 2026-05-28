@@ -49,7 +49,7 @@ import {
           <strong>{{ pendingTodayCount() }}</strong>
         </div>
         <div class="metric failed-metric">
-          <span>Failed streak</span>
+          <span>Failed today</span>
           <strong>{{ failedTodayCount() }}</strong>
         </div>
         <div class="metric month-metric">
@@ -60,26 +60,33 @@ import {
 
       <section class="chart-panel">
         <div class="section-head">
-          <h2>Daily completions</h2>
-          <span>Last 14 days</span>
-        </div>
-        <div class="line-chart">
-          <svg viewBox="0 0 720 220" role="img" aria-label="Daily completions line chart">
-            <line class="chart-grid" x1="30" y1="180" x2="700" y2="180"></line>
-            <line class="chart-grid" x1="30" y1="110" x2="700" y2="110"></line>
-            <line class="chart-grid" x1="30" y1="40" x2="700" y2="40"></line>
-            <polyline class="chart-line" [attr.points]="linePoints()"></polyline>
-            @for (point of chartPoints(); track point.date) {
-              <circle class="chart-point" [attr.cx]="point.x" [attr.cy]="point.y" r="5"></circle>
-              <text class="chart-value" [attr.x]="point.x" [attr.y]="point.y - 12">{{ point.completions }}</text>
-            }
-          </svg>
-          <div class="line-labels">
-            @for (day of dailyStats(); track day.date) {
-              <span>{{ formatChartDate(day.date) }}</span>
-            }
+          <div>
+            <h2>Daily completions</h2>
+            <span>Last 14 days</span>
           </div>
+          <button type="button" (click)="toggleChart()">
+            {{ chartExpanded() ? 'Hide chart' : 'Show chart' }}
+          </button>
         </div>
+        @if (chartExpanded()) {
+          <div class="line-chart">
+            <svg viewBox="0 0 720 220" role="img" aria-label="Daily completions line chart">
+              <line class="chart-grid" x1="30" y1="180" x2="700" y2="180"></line>
+              <line class="chart-grid" x1="30" y1="110" x2="700" y2="110"></line>
+              <line class="chart-grid" x1="30" y1="40" x2="700" y2="40"></line>
+              <polyline class="chart-line" [attr.points]="linePoints()"></polyline>
+              @for (point of chartPoints(); track point.date) {
+                <circle class="chart-point" [attr.cx]="point.x" [attr.cy]="point.y" r="5"></circle>
+                <text class="chart-value" [attr.x]="point.x" [attr.y]="point.y - 12">{{ point.completions }}</text>
+              }
+            </svg>
+            <div class="line-labels">
+              @for (day of dailyStats(); track day.date) {
+                <span>{{ formatChartDate(day.date) }}</span>
+              }
+            </div>
+          </div>
+        }
       </section>
 
       <section class="workspace">
@@ -99,6 +106,7 @@ import {
                      [class.completed]="isDoneToday(habit)"
                      [class.pending]="isPendingToday(habit)"
                      [class.failed]="isFailedToday(habit)"
+                     [class.target-reached]="targetReached(habit)"
                      [class.inactive]="!habit.active">
               <div class="card-head">
                 <div>
@@ -113,6 +121,9 @@ import {
                         [class.inactive-status]="!habit.active">
                     {{ habitStatusLabel(habit) }}
                   </span>
+                  @if (targetReached(habit)) {
+                    <span class="target-badge">Target reached</span>
+                  }
                   <span class="pill">{{ habit.category }}</span>
                 </div>
               </div>
@@ -122,17 +133,41 @@ import {
                 <span>Current {{ habit.currentStreak }}</span>
                 <span>Best {{ habit.bestStreak }}</span>
               </div>
+              <div class="target-progress" [class.reached]="targetReached(habit)">
+                <div>
+                  <span>Target progress</span>
+                  <strong>{{ targetProgressLabel(habit) }}</strong>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                  <span class="progress-fill" [style.width.%]="targetProgress(habit)"></span>
+                </div>
+              </div>
               <div class="actions wrap">
                 @if (!habit.active) {
                   <span class="card-note">Paused, history is kept</span>
                 } @else if (habit.completedToday) {
-                  <button type="button" (click)="undoToday(habit)">Undo today</button>
+                  <button type="button" (click)="undoToday(habit)">
+                    <span class="button-icon" aria-hidden="true">&#8634;</span>
+                    Undo today
+                  </button>
                 } @else {
-                  <button class="primary" type="button" (click)="completeToday(habit)">Done today</button>
+                  <button class="primary" type="button" (click)="completeToday(habit)">
+                    <span class="button-icon" aria-hidden="true">&check;</span>
+                    Done today
+                  </button>
                 }
-                <button type="button" (click)="selectHabit(habit)">History</button>
-                <button type="button" (click)="editHabit(habit)">Edit</button>
-                <button class="danger" type="button" (click)="deleteHabit(habit)">Delete</button>
+                <button type="button" (click)="selectHabit(habit)">
+                  <span class="button-icon" aria-hidden="true">i</span>
+                  History
+                </button>
+                <button type="button" (click)="editHabit(habit)">
+                  <span class="button-icon" aria-hidden="true">&#9998;</span>
+                  Edit
+                </button>
+                <button class="danger" type="button" (click)="deleteHabit(habit)">
+                  <span class="button-icon" aria-hidden="true">&times;</span>
+                  Delete
+                </button>
               </div>
             </article>
           }
@@ -168,7 +203,7 @@ import {
                 <h2>{{ editingHabitId() ? 'Edit habit' : 'Add habit' }}</h2>
                 <p>{{ editingHabitId() ? 'Update habit details and status.' : 'Create a new habit for your dashboard.' }}</p>
               </div>
-              <button type="button" class="icon-button" (click)="closeHabitDialog()">X</button>
+              <button type="button" class="icon-button" (click)="closeHabitDialog()" aria-label="Close dialog">&times;</button>
             </div>
 
             <label>
@@ -232,6 +267,7 @@ export class DashboardComponent implements OnInit {
   readonly error = signal('');
   readonly editingHabitId = signal<number | null>(null);
   readonly habitDialogOpen = signal(false);
+  readonly chartExpanded = signal(false);
   readonly selectedHabit = signal<HabitResponse | null>(null);
   readonly selectedCompletions = signal<HabitCompletionResponse[]>([]);
 
@@ -369,6 +405,10 @@ export class DashboardComponent implements OnInit {
       .join(' ');
   }
 
+  toggleChart(): void {
+    this.chartExpanded.update(expanded => !expanded);
+  }
+
   doneTodayCount(): number {
     return this.habits().filter(habit => habit.active && habit.completedToday).length;
   }
@@ -400,7 +440,22 @@ export class DashboardComponent implements OnInit {
     if (this.isDoneToday(habit)) {
       return 'Done today';
     }
-    return this.isFailedToday(habit) ? 'Failed streak' : 'Not done yet';
+    return this.isFailedToday(habit) ? 'Failed today' : 'Not done yet';
+  }
+
+  targetReached(habit: HabitResponse): boolean {
+    return habit.active && habit.completedToday && habit.currentStreak >= habit.targetCount;
+  }
+
+  targetProgress(habit: HabitResponse): number {
+    if (habit.targetCount <= 0) {
+      return 0;
+    }
+    return Math.min(100, Math.round((habit.currentStreak / habit.targetCount) * 100));
+  }
+
+  targetProgressLabel(habit: HabitResponse): string {
+    return `${Math.min(habit.currentStreak, habit.targetCount)}/${habit.targetCount}`;
   }
 
   formatChartDate(date: string): string {
