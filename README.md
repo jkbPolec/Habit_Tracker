@@ -39,6 +39,7 @@ Odpalaj w tej kolejnosci:
 
 Dodatkowo:
 
+- `2 Backend API with Seeder` uruchamia backend i jednorazowo dodaje konto demo
 - `Backend Tests` uruchamia testy backendu
 - `Frontend Build` buduje frontend
 
@@ -52,6 +53,13 @@ API backendu:
 
 ```text
 http://localhost:8080
+```
+
+Konto demo z historia habitow:
+
+```text
+Email: demo@example.com
+Password: password123
 ```
 
 ### Konsola
@@ -68,6 +76,13 @@ Terminal 2:
 ```powershell
 cd C:\Users\jkbpo\Documents\ZTPAI\backend
 .\mvnw.cmd spring-boot:run
+```
+
+Backend z seederem:
+
+```powershell
+cd C:\Users\jkbpo\Documents\ZTPAI\backend
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=seed
 ```
 
 Terminal 3:
