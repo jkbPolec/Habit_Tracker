@@ -36,17 +36,25 @@ import {
       }
 
       <section class="stats-grid">
-        <div class="metric">
+        <div class="metric active-metric">
           <span>Active habits</span>
           <strong>{{ stats()?.activeHabits ?? 0 }}</strong>
         </div>
-        <div class="metric">
+        <div class="metric done-metric">
+          <span>Done today</span>
+          <strong>{{ doneTodayCount() }}</strong>
+        </div>
+        <div class="metric pending-metric">
+          <span>Not done yet</span>
+          <strong>{{ pendingTodayCount() }}</strong>
+        </div>
+        <div class="metric failed-metric">
+          <span>Failed streak</span>
+          <strong>{{ failedTodayCount() }}</strong>
+        </div>
+        <div class="metric month-metric">
           <span>This month</span>
           <strong>{{ stats()?.currentMonthCompletions ?? 0 }}</strong>
-        </div>
-        <div class="metric">
-          <span>Total habits</span>
-          <strong>{{ habits().length }}</strong>
         </div>
       </section>
 
@@ -75,67 +83,38 @@ import {
       </section>
 
       <section class="workspace">
-        <form class="habit-form" [formGroup]="form" (ngSubmit)="saveHabit()">
-          <h2>{{ editingHabitId() ? 'Edit habit' : 'Add habit' }}</h2>
-          <label>
-            Name
-            <input type="text" formControlName="name">
-          </label>
-          <label>
-            Description
-            <textarea rows="4" formControlName="description"></textarea>
-          </label>
-          <div class="form-row">
-            <label>
-              Category
-              <select formControlName="category">
-                @for (category of categories; track category) {
-                  <option [value]="category">{{ category }}</option>
-                }
-              </select>
-            </label>
-            <label>
-              Frequency
-              <select formControlName="frequency">
-                @for (frequency of frequencies; track frequency) {
-                  <option [value]="frequency">{{ frequency }}</option>
-                }
-              </select>
-            </label>
-          </div>
-          <div class="form-row">
-            <label>
-              Target count
-              <input type="number" min="1" formControlName="targetCount">
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" formControlName="active">
-              Active
-            </label>
-          </div>
-          <div class="actions">
-            <button class="primary" type="submit" [disabled]="form.invalid">
-              {{ editingHabitId() ? 'Save changes' : 'Add habit' }}
-            </button>
-            @if (editingHabitId()) {
-              <button type="button" (click)="cancelEdit()">Cancel</button>
-            }
-          </div>
-        </form>
-
         <section class="habit-list">
-          <h2>Your habits</h2>
+          <div class="section-head">
+            <div>
+              <h2>Your habits</h2>
+              <span>{{ habits().length }} total</span>
+            </div>
+            <button class="primary" type="button" (click)="openCreateDialog()">Add habit</button>
+          </div>
           @if (!habits().length) {
             <p class="empty">Add the first habit to start the demo flow.</p>
           }
           @for (habit of habits(); track habit.id) {
-            <article class="habit-card" [class.inactive]="!habit.active">
+            <article class="habit-card"
+                     [class.completed]="isDoneToday(habit)"
+                     [class.pending]="isPendingToday(habit)"
+                     [class.failed]="isFailedToday(habit)"
+                     [class.inactive]="!habit.active">
               <div class="card-head">
                 <div>
                   <h3>{{ habit.name }}</h3>
                   <p>{{ habit.description || 'No description' }}</p>
                 </div>
-                <span class="pill">{{ habit.category }}</span>
+                <div class="card-badges">
+                  <span class="status"
+                        [class.done-status]="isDoneToday(habit)"
+                        [class.pending-status]="isPendingToday(habit)"
+                        [class.failed-status]="isFailedToday(habit)"
+                        [class.inactive-status]="!habit.active">
+                    {{ habitStatusLabel(habit) }}
+                  </span>
+                  <span class="pill">{{ habit.category }}</span>
+                </div>
               </div>
               <div class="habit-meta">
                 <span>{{ habit.frequency }}</span>
@@ -145,7 +124,7 @@ import {
               </div>
               <div class="actions wrap">
                 @if (!habit.active) {
-                  <span class="status inactive-status">Inactive</span>
+                  <span class="card-note">Paused, history is kept</span>
                 } @else if (habit.completedToday) {
                   <button type="button" (click)="undoToday(habit)">Undo today</button>
                 } @else {
@@ -180,6 +159,69 @@ import {
           }
         </aside>
       </section>
+
+      @if (habitDialogOpen()) {
+        <div class="modal-backdrop" (click)="closeHabitDialog()">
+          <form class="modal-panel" [formGroup]="form" (ngSubmit)="saveHabit()" (click)="$event.stopPropagation()">
+            <div class="modal-head">
+              <div>
+                <h2>{{ editingHabitId() ? 'Edit habit' : 'Add habit' }}</h2>
+                <p>{{ editingHabitId() ? 'Update habit details and status.' : 'Create a new habit for your dashboard.' }}</p>
+              </div>
+              <button type="button" class="icon-button" (click)="closeHabitDialog()">X</button>
+            </div>
+
+            <label>
+              Name
+              <input type="text" formControlName="name">
+            </label>
+            <label>
+              Description
+              <textarea rows="4" formControlName="description"></textarea>
+            </label>
+            <div class="form-row">
+              <label>
+                Category
+                <select formControlName="category">
+                  @for (category of categories; track category) {
+                    <option [value]="category">{{ category }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Frequency
+                <select formControlName="frequency">
+                  @for (frequency of frequencies; track frequency) {
+                    <option [value]="frequency">{{ frequency }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                Target count
+                <input type="number" min="1" formControlName="targetCount">
+              </label>
+              @if (editingHabitId()) {
+                <label class="checkbox">
+                  <input type="checkbox" formControlName="active">
+                  Active
+                </label>
+              } @else {
+                <div class="form-note">
+                  New habits start active. You can pause them later from Edit.
+                </div>
+              }
+            </div>
+            <div class="modal-actions">
+              <button type="button" (click)="closeHabitDialog()">Cancel</button>
+              <button class="primary" type="submit" [disabled]="form.invalid">
+                {{ editingHabitId() ? 'Save changes' : 'Add habit' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      }
     </main>
   `
 })
@@ -189,6 +231,7 @@ export class DashboardComponent implements OnInit {
   readonly dailyStats = signal<DailyCompletionStatsResponse[]>([]);
   readonly error = signal('');
   readonly editingHabitId = signal<number | null>(null);
+  readonly habitDialogOpen = signal(false);
   readonly selectedHabit = signal<HabitResponse | null>(null);
   readonly selectedCompletions = signal<HabitCompletionResponse[]>([]);
 
@@ -238,11 +281,17 @@ export class DashboardComponent implements OnInit {
     const request = id ? this.api.updateHabit(id, payload) : this.api.createHabit(payload);
     request.subscribe({
       next: () => {
-        this.cancelEdit();
+        this.closeHabitDialog();
         this.refresh();
       },
       error: err => this.showError(err)
     });
+  }
+
+  openCreateDialog(): void {
+    this.editingHabitId.set(null);
+    this.resetHabitForm();
+    this.habitDialogOpen.set(true);
   }
 
   editHabit(habit: HabitResponse): void {
@@ -255,18 +304,13 @@ export class DashboardComponent implements OnInit {
       targetCount: habit.targetCount,
       active: habit.active
     });
+    this.habitDialogOpen.set(true);
   }
 
-  cancelEdit(): void {
+  closeHabitDialog(): void {
     this.editingHabitId.set(null);
-    this.form.reset({
-      name: '',
-      description: '',
-      category: 'HEALTH',
-      frequency: 'DAILY',
-      targetCount: 1,
-      active: true
-    });
+    this.habitDialogOpen.set(false);
+    this.resetHabitForm();
   }
 
   completeToday(habit: HabitResponse): void {
@@ -325,8 +369,53 @@ export class DashboardComponent implements OnInit {
       .join(' ');
   }
 
+  doneTodayCount(): number {
+    return this.habits().filter(habit => habit.active && habit.completedToday).length;
+  }
+
+  failedTodayCount(): number {
+    return this.habits().filter(habit => this.isFailedToday(habit)).length;
+  }
+
+  pendingTodayCount(): number {
+    return this.habits().filter(habit => this.isPendingToday(habit)).length;
+  }
+
+  isDoneToday(habit: HabitResponse): boolean {
+    return habit.active && habit.completedToday;
+  }
+
+  isPendingToday(habit: HabitResponse): boolean {
+    return habit.active && !habit.completedToday && !this.isFailedToday(habit);
+  }
+
+  isFailedToday(habit: HabitResponse): boolean {
+    return habit.active && !habit.completedToday && habit.currentStreak === 0 && habit.bestStreak > 0;
+  }
+
+  habitStatusLabel(habit: HabitResponse): string {
+    if (!habit.active) {
+      return 'Inactive';
+    }
+    if (this.isDoneToday(habit)) {
+      return 'Done today';
+    }
+    return this.isFailedToday(habit) ? 'Failed streak' : 'Not done yet';
+  }
+
   formatChartDate(date: string): string {
     return new Intl.DateTimeFormat('en', { day: '2-digit', month: '2-digit' }).format(new Date(`${date}T00:00:00`));
+  }
+
+  private resetHabitForm(): void {
+    this.form.reset({
+      name: '',
+      description: '',
+      category: 'HEALTH',
+      frequency: 'DAILY',
+      targetCount: 1,
+      active: true
+    });
   }
 
   private showError(err: { error?: ApiError }): void {

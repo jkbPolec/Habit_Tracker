@@ -10,6 +10,7 @@ import com.example.habittracker.dto.statistics.DailyCompletionStatsResponse;
 import com.example.habittracker.dto.statistics.HabitStatisticsResponse;
 import com.example.habittracker.entity.Habit;
 import com.example.habittracker.entity.HabitCompletion;
+import com.example.habittracker.entity.HabitFrequency;
 import com.example.habittracker.entity.User;
 import com.example.habittracker.event.HabitCompletedEvent;
 import com.example.habittracker.event.HabitCreatedEvent;
@@ -211,11 +212,11 @@ public class HabitService {
 
     @Transactional(readOnly = true)
     public HabitStatisticsResponse getHabitStatistics(Long id) {
-        getOwnedHabit(id);
+        Habit habit = getOwnedHabit(id);
         return new HabitStatisticsResponse(
                 id,
-                calculateCurrentStreak(id),
-                calculateBestStreak(id),
+                calculateCurrentStreak(habit),
+                calculateBestStreak(habit),
                 completionRepository.existsByHabitIdAndCompletionDate(id, LocalDate.now())
         );
     }
@@ -252,9 +253,55 @@ public class HabitService {
         return habitMapper.toResponse(
                 habit,
                 completionRepository.existsByHabitIdAndCompletionDate(id, LocalDate.now()),
-                calculateCurrentStreak(id),
-                calculateBestStreak(id)
+                calculateCurrentStreak(habit),
+                calculateBestStreak(habit)
         );
+    }
+
+    private int calculateCurrentStreak(Habit habit) {
+        if (habit.getFrequency() == HabitFrequency.DAILY) {
+            return calculateCurrentStreak(habit.getId());
+        }
+
+        Set<LocalDate> weeks = completionWeeks(habit.getId());
+        LocalDate thisWeek = weekStart(LocalDate.now());
+        LocalDate cursor = weeks.contains(thisWeek) ? thisWeek : thisWeek.minusWeeks(1);
+        int streak = 0;
+        while (weeks.contains(cursor)) {
+            streak++;
+            cursor = cursor.minusWeeks(1);
+        }
+        return streak;
+    }
+
+    private int calculateBestStreak(Habit habit) {
+        if (habit.getFrequency() == HabitFrequency.DAILY) {
+            return calculateBestStreak(habit.getId());
+        }
+
+        List<LocalDate> weeks = completionWeeks(habit.getId()).stream()
+                .sorted()
+                .toList();
+        int best = 0;
+        int current = 0;
+        LocalDate previous = null;
+        for (LocalDate week : weeks) {
+            current = previous != null && week.equals(previous.plusWeeks(1)) ? current + 1 : 1;
+            best = Math.max(best, current);
+            previous = week;
+        }
+        return best;
+    }
+
+    private Set<LocalDate> completionWeeks(Long habitId) {
+        Set<LocalDate> weeks = new HashSet<>();
+        completionRepository.findCompletionDatesByHabitId(habitId)
+                .forEach(date -> weeks.add(weekStart(date)));
+        return weeks;
+    }
+
+    private LocalDate weekStart(LocalDate date) {
+        return date.minusDays(date.getDayOfWeek().getValue() - 1L);
     }
 
     private Habit getOwnedHabit(Long id) {
