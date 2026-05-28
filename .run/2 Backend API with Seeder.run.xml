@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="2 Backend API with Seeder" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value=".\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=seed" />
+    <option name="SCRIPT_TEXT" value=".\mvnw.cmd spring-boot:run &quot;-Dspring-boot.run.profiles=seed&quot;" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />

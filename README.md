@@ -82,7 +82,7 @@ Backend z seederem:
 
 ```powershell
 cd C:\Users\jkbpo\Documents\ZTPAI\backend
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=seed
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=seed"
 ```
 
 Terminal 3:
