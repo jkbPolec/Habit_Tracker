@@ -38,6 +38,11 @@ export interface DashboardStatisticsResponse {
   currentMonthCompletions: number;
 }
 
+export interface DailyCompletionStatsResponse {
+  date: string;
+  completions: number;
+}
+
 export interface HabitCompletionResponse {
   id: number;
   habitId: number;

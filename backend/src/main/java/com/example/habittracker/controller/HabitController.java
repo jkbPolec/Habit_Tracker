@@ -6,6 +6,7 @@ import com.example.habittracker.dto.habit.HabitCreateRequest;
 import com.example.habittracker.dto.habit.HabitResponse;
 import com.example.habittracker.dto.habit.HabitUpdateRequest;
 import com.example.habittracker.dto.statistics.DashboardStatisticsResponse;
+import com.example.habittracker.dto.statistics.DailyCompletionStatsResponse;
 import com.example.habittracker.dto.statistics.HabitStatisticsResponse;
 import com.example.habittracker.service.HabitService;
 import jakarta.validation.Valid;
@@ -94,6 +95,13 @@ public class HabitController {
     @GetMapping("/statistics")
     public DashboardStatisticsResponse getDashboardStatistics() {
         return habitService.getDashboardStatistics();
+    }
+
+    @GetMapping("/statistics/daily")
+    public List<DailyCompletionStatsResponse> getDailyCompletionStatistics(
+            @RequestParam(defaultValue = "14") int days
+    ) {
+        return habitService.getDailyCompletionStatistics(days);
     }
 
     @GetMapping("/{id}/statistics")

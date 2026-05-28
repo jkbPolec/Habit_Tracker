@@ -6,6 +6,7 @@ import com.example.habittracker.dto.habit.HabitCreateRequest;
 import com.example.habittracker.dto.habit.HabitResponse;
 import com.example.habittracker.dto.habit.HabitUpdateRequest;
 import com.example.habittracker.dto.statistics.DashboardStatisticsResponse;
+import com.example.habittracker.dto.statistics.DailyCompletionStatsResponse;
 import com.example.habittracker.dto.statistics.HabitStatisticsResponse;
 import com.example.habittracker.entity.Habit;
 import com.example.habittracker.entity.HabitCompletion;
@@ -26,7 +27,9 @@ import com.example.habittracker.repository.HabitRepository;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -183,6 +186,27 @@ public class HabitService {
                 habitRepository.countByUserIdAndActiveTrue(user.getId()),
                 completions
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailyCompletionStatsResponse> getDailyCompletionStatistics(int days) {
+        User user = currentUserService.getCurrentUser();
+        int safeDays = Math.max(7, Math.min(days, 60));
+        LocalDate end = LocalDate.now();
+        LocalDate start = end.minusDays(safeDays - 1L);
+
+        Map<LocalDate, Long> countsByDate = new LinkedHashMap<>();
+        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
+            countsByDate.put(date, 0L);
+        }
+
+        completionRepository.countCompletionsByUserAndDateBetween(user.getId(), start, end)
+                .forEach(row -> countsByDate.put((LocalDate) row[0], ((Number) row[1]).longValue()));
+
+        return countsByDate.entrySet()
+                .stream()
+                .map(entry -> new DailyCompletionStatsResponse(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     @Transactional(readOnly = true)

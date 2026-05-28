@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 
 import com.example.habittracker.dto.completion.HabitCompletionRequest;
+import com.example.habittracker.dto.statistics.DailyCompletionStatsResponse;
 import com.example.habittracker.dto.habit.HabitCreateRequest;
 import com.example.habittracker.dto.habit.HabitResponse;
 import com.example.habittracker.dto.habit.HabitUpdateRequest;
@@ -235,6 +236,26 @@ class HabitServiceTest {
         ));
 
         assertThat(habitService.calculateBestStreak(10L)).isEqualTo(4);
+    }
+
+    @Test
+    void getDailyCompletionStatistics_shouldReturnCountsForEachDay() {
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(6);
+        when(completionRepository.countCompletionsByUserAndDateBetween(currentUser.getId(), start, today))
+                .thenReturn(List.of(
+                        new Object[]{start.plusDays(1), 2L},
+                        new Object[]{today, 3L}
+                ));
+
+        List<DailyCompletionStatsResponse> response = habitService.getDailyCompletionStatistics(7);
+
+        assertThat(response).hasSize(7);
+        assertThat(response.get(0).date()).isEqualTo(start);
+        assertThat(response.get(0).completions()).isZero();
+        assertThat(response.get(1).completions()).isEqualTo(2);
+        assertThat(response.get(6).date()).isEqualTo(today);
+        assertThat(response.get(6).completions()).isEqualTo(3);
     }
 
     private static User user(Long id) {

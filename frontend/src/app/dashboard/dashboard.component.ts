@@ -6,6 +6,7 @@ import { AuthService } from '../core/auth.service';
 import {
   ApiError,
   DashboardStatisticsResponse,
+  DailyCompletionStatsResponse,
   HabitCategory,
   HabitCompletionResponse,
   HabitFrequency,
@@ -46,6 +47,24 @@ import {
         <div class="metric">
           <span>Total habits</span>
           <strong>{{ habits().length }}</strong>
+        </div>
+      </section>
+
+      <section class="chart-panel">
+        <div class="section-head">
+          <h2>Daily completions</h2>
+          <span>Last 14 days</span>
+        </div>
+        <div class="bar-chart">
+          @for (day of dailyStats(); track day.date) {
+            <div class="bar-item">
+              <span class="bar-value">{{ day.completions }}</span>
+              <div class="bar-track">
+                <div class="bar-fill" [style.height.%]="chartHeight(day.completions)"></div>
+              </div>
+              <span class="bar-label">{{ formatChartDate(day.date) }}</span>
+            </div>
+          }
         </div>
       </section>
 
@@ -161,6 +180,7 @@ import {
 export class DashboardComponent implements OnInit {
   readonly habits = signal<HabitResponse[]>([]);
   readonly stats = signal<DashboardStatisticsResponse | null>(null);
+  readonly dailyStats = signal<DailyCompletionStatsResponse[]>([]);
   readonly error = signal('');
   readonly editingHabitId = signal<number | null>(null);
   readonly selectedHabit = signal<HabitResponse | null>(null);
@@ -195,6 +215,10 @@ export class DashboardComponent implements OnInit {
     });
     this.api.getDashboardStatistics().subscribe({
       next: stats => this.stats.set(stats),
+      error: err => this.showError(err)
+    });
+    this.api.getDailyCompletionStatistics().subscribe({
+      next: stats => this.dailyStats.set(stats),
       error: err => this.showError(err)
     });
   }
@@ -272,6 +296,15 @@ export class DashboardComponent implements OnInit {
       next: completions => this.selectedCompletions.set(completions),
       error: err => this.showError(err)
     });
+  }
+
+  chartHeight(completions: number): number {
+    const max = Math.max(...this.dailyStats().map(day => day.completions), 1);
+    return completions === 0 ? 4 : Math.max(12, (completions / max) * 100);
+  }
+
+  formatChartDate(date: string): string {
+    return new Intl.DateTimeFormat('en', { day: '2-digit', month: '2-digit' }).format(new Date(`${date}T00:00:00`));
   }
 
   private showError(err: { error?: ApiError }): void {

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import {
   ActivityLogResponse,
   DashboardStatisticsResponse,
+  DailyCompletionStatsResponse,
   HabitCompletionResponse,
   HabitRequest,
   HabitResponse
@@ -20,6 +21,10 @@ export class ApiService {
 
   getDashboardStatistics() {
     return this.http.get<DashboardStatisticsResponse>(`${this.apiUrl}/habits/statistics`);
+  }
+
+  getDailyCompletionStatistics(days = 14) {
+    return this.http.get<DailyCompletionStatsResponse[]>(`${this.apiUrl}/habits/statistics/daily?days=${days}`);
   }
 
   createHabit(payload: HabitRequest) {
