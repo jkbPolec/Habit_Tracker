@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: habit-tracker
+  datasource:
+    url: jdbc:postgresql://localhost:5432/habit_tracker
+    username: habit_user
+    password: habit_password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: "change-this-development-secret-change-this-development-secret"
+    expiration-ms: 86400000
