@@ -65,7 +65,7 @@ public class HabitService {
     @Transactional(readOnly = true)
     public List<HabitResponse> getHabits() {
         User user = currentUserService.getCurrentUser();
-        return habitRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+        return habitRepository.findByUserIdOrderByCreatedAtAsc(user.getId())
                 .stream()
                 .map(this::toResponseWithStats)
                 .toList();

@@ -2,7 +2,7 @@
 
 ## O czym jest projekt
 
-Habit Tracker to aplikacja webowa do sledzenia nawykow. Uzytkownik moze zalozyc konto, zalogowac sie i zarzadzac swoimi habitami.
+Habit Tracker to aplikacja webowa do sledzenia nawykow. Uzytkownik zaklada konto, loguje sie i zarzadza swoimi habitami, a aplikacja pilnuje streakow, historii wykonania i aktywnosci.
 
 Glowne funkcje:
 
@@ -10,9 +10,11 @@ Glowne funkcje:
 - JWT i dostep tylko do wlasnych danych
 - dodawanie, edycja, usuwanie i przegladanie habitow
 - oznaczanie habitu jako wykonanego dzisiaj
+- dodawanie notatki przy wykonaniu habitu
 - cofanie wykonania
 - current streak i best streak
 - statystyki dashboardu
+- wykres wykonanych habitow z ostatnich dni
 - historia aktywnosci zapisywana przez Spring Events
 
 Backend nie zwraca encji JPA bezposrednio. Kontrolery pracuja na DTO. Bledy API sa obslugiwane globalnie przez `@ControllerAdvice`.
@@ -39,7 +41,7 @@ Odpalaj w tej kolejnosci:
 
 Dodatkowo:
 
-- `2 Backend API with Seeder` uruchamia backend i jednorazowo dodaje konto demo
+- `2 Backend API with Seeder` uruchamia backend, czysci baze i tworzy konto demo
 - `Backend Tests` uruchamia testy backendu
 - `Frontend Build` buduje frontend
 
@@ -55,7 +57,7 @@ API backendu:
 http://localhost:8080
 ```
 
-Konto demo z historia habitow:
+Konto demo:
 
 ```text
 Email: demo@example.com
@@ -86,6 +88,13 @@ cd C:\Users\jkbpo\Documents\ZTPAI\backend
 ```
 
 Seeder czysci tabele demo przed dodaniem danych, resetuje ID i tworzy od nowa konto oraz przykladowe habity. Po kazdym odpaleniu profilu `seed` baza startuje z tym samym zestawem danych prezentacyjnych.
+
+Seeder tworzy cztery czytelne przypadki:
+
+- habit do odhaczenia: target 15, current 6
+- habit do odhaczenia, ktory po kliknieciu osiaga target: target 10, current 9
+- habit z przerwanym streakiem
+- zatrzymany habit z krotkim powodem zatrzymania
 
 Terminal 3:
 

@@ -91,7 +91,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         Habit meditation = createHabit(
                 savedUser,
                 "Wieczorna medytacja",
-                "Wstrzymane na tydzien przez bol kolana.",
+                "Wstrzymane na tydzien przez remont sasiada.",
                 HabitCategory.PERSONAL,
                 HabitFrequency.DAILY,
                 5,
@@ -108,7 +108,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         createLog(savedUser, walking, ActivityEventType.HABIT_CREATED, "Utworzono habit: Poranny spacer");
         createLog(savedUser, water, ActivityEventType.HABIT_CREATED, "Utworzono habit: Woda rano");
         createLog(savedUser, meditation, ActivityEventType.HABIT_CREATED, "Utworzono habit: Wieczorna medytacja");
-        createLog(savedUser, meditation, ActivityEventType.HABIT_UPDATED, "Wstrzymano habit: Wieczorna medytacja. Powod: bol kolana");
+        createLog(savedUser, meditation, ActivityEventType.HABIT_UPDATED, "Wstrzymano habit: Wieczorna medytacja. Powod: remont sasiada");
         createLog(savedUser, reading, ActivityEventType.HABIT_COMPLETED, "Wykonano habit: Czytanie przed snem wczoraj");
         createLog(savedUser, walking, ActivityEventType.HABIT_COMPLETED, "Wykonano habit: Poranny spacer wczoraj");
     }
