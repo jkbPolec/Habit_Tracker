@@ -39,10 +39,10 @@ export class ApiService {
     return this.http.delete<void>(`${this.apiUrl}/habits/${id}`);
   }
 
-  completeToday(id: number) {
+  completeToday(id: number, note = '') {
     return this.http.post<HabitCompletionResponse>(`${this.apiUrl}/habits/${id}/completions`, {
       completionDate: this.today(),
-      note: 'Done from dashboard'
+      note: note.trim() || null
     });
   }
 

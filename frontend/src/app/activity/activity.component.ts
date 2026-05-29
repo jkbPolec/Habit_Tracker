@@ -31,10 +31,12 @@ import { ActivityLogResponse, ApiError } from '../core/models';
           <p class="empty">No activity recorded yet.</p>
         }
         @for (log of logs(); track log.id) {
-          <article class="activity-item">
-            <time>{{ log.createdAt | date:'short' }}</time>
-            <strong>{{ log.eventType }}</strong>
-            <p>{{ log.message }}</p>
+          <article class="activity-item" [class]="activityClass(log.eventType)">
+            <div class="activity-main">
+              <time>{{ log.createdAt | date:'short' }}</time>
+              <p>{{ log.message }}</p>
+            </div>
+            <strong class="activity-badge">{{ activityLabel(log.eventType) }}</strong>
           </article>
         }
       </section>
@@ -55,5 +57,13 @@ export class ActivityComponent implements OnInit {
         this.error.set(apiError?.message ?? 'Could not load activity');
       }
     });
+  }
+
+  activityClass(eventType: string): string {
+    return `activity-item ${eventType.toLowerCase().replaceAll('_', '-')}`;
+  }
+
+  activityLabel(eventType: string): string {
+    return eventType.toLowerCase().replaceAll('_', ' ');
   }
 }

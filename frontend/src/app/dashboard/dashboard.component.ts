@@ -22,8 +22,8 @@ import {
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <h1>Habit Tracker</h1>
-          <span>{{ auth.currentUser()?.username }}</span>
+          <h1>Witaj {{ auth.currentUser()?.username }}!</h1>
+          <span>Habit Tracker</span>
         </div>
         <nav>
           <a routerLink="/activity">Activity</a>
@@ -151,7 +151,7 @@ import {
                     Undo today
                   </button>
                 } @else {
-                  <button class="primary" type="button" (click)="completeToday(habit)">
+                  <button class="primary" type="button" (click)="openCompletionDialog(habit)">
                     <span class="button-icon" aria-hidden="true">&check;</span>
                     Done today
                   </button>
@@ -257,6 +257,30 @@ import {
           </form>
         </div>
       }
+
+      @if (completingHabit()) {
+        <div class="modal-backdrop" (click)="closeCompletionDialog()">
+          <form class="modal-panel" [formGroup]="completionForm" (ngSubmit)="completeToday()" (click)="$event.stopPropagation()">
+            <div class="modal-head">
+              <div>
+                <h2>Complete habit</h2>
+                <p>{{ completingHabit()?.name }}</p>
+              </div>
+              <button type="button" class="icon-button" (click)="closeCompletionDialog()" aria-label="Close dialog">&times;</button>
+            </div>
+
+            <label>
+              Note
+              <textarea rows="4" formControlName="note" placeholder="Optional note for today's completion"></textarea>
+            </label>
+
+            <div class="modal-actions">
+              <button type="button" (click)="closeCompletionDialog()">Cancel</button>
+              <button class="primary" type="submit" [disabled]="completionForm.invalid">Save completion</button>
+            </div>
+          </form>
+        </div>
+      }
     </main>
   `
 })
@@ -268,6 +292,7 @@ export class DashboardComponent implements OnInit {
   readonly editingHabitId = signal<number | null>(null);
   readonly habitDialogOpen = signal(false);
   readonly chartExpanded = signal(false);
+  readonly completingHabit = signal<HabitResponse | null>(null);
   readonly selectedHabit = signal<HabitResponse | null>(null);
   readonly selectedCompletions = signal<HabitCompletionResponse[]>([]);
 
@@ -281,6 +306,10 @@ export class DashboardComponent implements OnInit {
     frequency: ['DAILY' as HabitFrequency, Validators.required],
     targetCount: [1, [Validators.required, Validators.min(1)]],
     active: [true, Validators.required]
+  });
+
+  completionForm = this.fb.nonNullable.group({
+    note: ['', Validators.maxLength(300)]
   });
 
   constructor(
@@ -349,9 +378,32 @@ export class DashboardComponent implements OnInit {
     this.resetHabitForm();
   }
 
-  completeToday(habit: HabitResponse): void {
-    this.api.completeToday(habit.id).subscribe({
-      next: () => this.refresh(),
+  openCompletionDialog(habit: HabitResponse): void {
+    this.completingHabit.set(habit);
+    this.completionForm.reset({ note: '' });
+  }
+
+  closeCompletionDialog(): void {
+    this.completingHabit.set(null);
+    this.completionForm.reset({ note: '' });
+  }
+
+  completeToday(): void {
+    if (this.completionForm.invalid) {
+      return;
+    }
+    const habit = this.completingHabit();
+    if (!habit) {
+      return;
+    }
+    this.api.completeToday(habit.id, this.completionForm.getRawValue().note).subscribe({
+      next: () => {
+        this.closeCompletionDialog();
+        this.refresh();
+        if (this.selectedHabit()?.id === habit.id) {
+          this.selectHabit(habit);
+        }
+      },
       error: err => this.showError(err)
     });
   }

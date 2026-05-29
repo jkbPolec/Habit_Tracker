@@ -85,6 +85,8 @@ cd C:\Users\jkbpo\Documents\ZTPAI\backend
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=seed"
 ```
 
+Seeder czysci tabele demo przed dodaniem danych, resetuje ID i tworzy od nowa konto oraz przykladowe habity. Po kazdym odpaleniu profilu `seed` baza startuje z tym samym zestawem danych prezentacyjnych.
+
 Terminal 3:
 
 ```powershell

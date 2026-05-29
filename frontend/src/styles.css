@@ -697,11 +697,78 @@ button:not(.primary) .button-icon {
 }
 
 .activity-item {
+  align-items: center;
+  border-left: 6px solid #89939d;
+  box-shadow: 0 12px 30px rgba(23, 32, 42, 0.05);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
   padding: 1rem;
+}
+
+.activity-item.habit-created {
+  background: #f4f8fc;
+  border-left-color: #2f6fb0;
+}
+
+.activity-item.habit-updated {
+  background: #fbf8ef;
+  border-left-color: #b9932f;
+}
+
+.activity-item.habit-deleted,
+.activity-item.habit-uncompleted {
+  background: #fff5f0;
+  border-left-color: #c75b42;
+}
+
+.activity-item.habit-completed {
+  background: #f3fbf8;
+  border-left-color: #1c7a62;
+}
+
+.activity-main {
+  display: grid;
+  gap: 0.25rem;
 }
 
 .activity-item p {
   margin-bottom: 0;
+}
+
+.activity-badge {
+  border: 1px solid #dce2e7;
+  border-radius: 8px;
+  color: #4f5d69;
+  font-size: 0.75rem;
+  padding: 0.38rem 0.55rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.habit-created .activity-badge {
+  background: #e9f2fb;
+  border-color: #bad2ed;
+  color: #245b8f;
+}
+
+.habit-updated .activity-badge {
+  background: #fff6df;
+  border-color: #ecd899;
+  color: #695008;
+}
+
+.habit-deleted .activity-badge,
+.habit-uncompleted .activity-badge {
+  background: #fff0e9;
+  border-color: #efb8a7;
+  color: #a43d27;
+}
+
+.habit-completed .activity-badge {
+  background: #e6f6ef;
+  border-color: #93d2bd;
+  color: #12614d;
 }
 
 @keyframes target-sweep {
@@ -751,6 +818,7 @@ button:not(.primary) .button-icon {
 @media (max-width: 680px) {
   .topbar,
   .card-head,
+  .activity-item,
   nav,
   .modal-actions {
     align-items: stretch;

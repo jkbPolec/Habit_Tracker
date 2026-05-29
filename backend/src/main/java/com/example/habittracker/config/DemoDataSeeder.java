@@ -11,7 +11,7 @@ import com.example.habittracker.repository.ActivityLogRepository;
 import com.example.habittracker.repository.HabitCompletionRepository;
 import com.example.habittracker.repository.HabitRepository;
 import com.example.habittracker.repository.UserRepository;
-import java.time.DayOfWeek;
+import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.function.Predicate;
 import org.springframework.boot.CommandLineRunner;
@@ -32,101 +32,91 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final HabitCompletionRepository completionRepository;
     private final ActivityLogRepository activityLogRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
 
     public DemoDataSeeder(
             UserRepository userRepository,
             HabitRepository habitRepository,
             HabitCompletionRepository completionRepository,
             ActivityLogRepository activityLogRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            EntityManager entityManager
     ) {
         this.userRepository = userRepository;
         this.habitRepository = habitRepository;
         this.completionRepository = completionRepository;
         this.activityLogRepository = activityLogRepository;
         this.passwordEncoder = passwordEncoder;
+        this.entityManager = entityManager;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (userRepository.existsByEmail(DEMO_EMAIL)) {
-            return;
-        }
+        resetDatabase();
 
         User demoUser = new User();
-        demoUser.setUsername("demo");
+        demoUser.setUsername("demo_user");
         demoUser.setEmail(DEMO_EMAIL);
         demoUser.setPassword(passwordEncoder.encode(DEMO_PASSWORD));
         User savedUser = userRepository.save(demoUser);
 
         Habit reading = createHabit(
                 savedUser,
-                "Read 20 pages",
-                "Daily reading habit with a long streak.",
+                "Czytanie przed snem",
+                "Kilka stron ksiazki przed odlozeniem telefonu.",
                 HabitCategory.STUDY,
                 HabitFrequency.DAILY,
-                1,
+                15,
                 true
         );
-        Habit running = createHabit(
+        Habit walking = createHabit(
                 savedUser,
-                "Morning run",
-                "Run before work, mostly on weekdays.",
+                "Poranny spacer",
+                "Krotki spacer przed rozpoczeciem pracy.",
                 HabitCategory.FITNESS,
                 HabitFrequency.DAILY,
-                1,
+                10,
                 true
         );
         Habit water = createHabit(
                 savedUser,
-                "Drink 2L water",
-                "Simple health habit with many completions.",
+                "Woda rano",
+                "Szklanka wody zaraz po przebudzeniu.",
                 HabitCategory.HEALTH,
                 HabitFrequency.DAILY,
-                1,
-                true
-        );
-        Habit planning = createHabit(
-                savedUser,
-                "Weekly planning",
-                "Plan next week every Sunday.",
-                HabitCategory.WORK,
-                HabitFrequency.WEEKLY,
-                1,
+                7,
                 true
         );
         Habit meditation = createHabit(
                 savedUser,
-                "Meditation",
-                "Paused habit kept for demo filtering.",
+                "Wieczorna medytacja",
+                "Wstrzymane na tydzien przez bol kolana.",
                 HabitCategory.PERSONAL,
                 HabitFrequency.DAILY,
-                1,
+                5,
                 false
         );
 
         LocalDate today = LocalDate.now();
-        addCompletions(reading, today.minusDays(89), today, date -> !date.equals(today.minusDays(12)));
-        addCompletions(running, today.minusDays(59), today, date ->
-                date.getDayOfWeek() != DayOfWeek.SATURDAY
-                        && date.getDayOfWeek() != DayOfWeek.SUNDAY
-                        && !date.equals(today.minusDays(8))
-        );
-        addCompletions(water, today.minusDays(44), today, date ->
-                date.getDayOfMonth() % 6 != 0
-                        && date.getDayOfMonth() % 13 != 0
-        );
-        addCompletions(planning, today.minusDays(84), today, date -> date.getDayOfWeek() == DayOfWeek.SUNDAY);
-        addCompletions(meditation, today.minusDays(40), today.minusDays(16), date -> date.getDayOfMonth() % 4 != 0);
+        addCompletions(reading, today.minusDays(6), today.minusDays(1), date -> true, "Przeczytane przed snem");
+        addCompletions(walking, today.minusDays(9), today.minusDays(1), date -> true, "Spacer po okolicy");
+        addCompletions(water, today.minusDays(13), today.minusDays(7), date -> true, "Woda wypita po przebudzeniu");
+        addCompletions(meditation, today.minusDays(20), today.minusDays(15), date -> true, "Dziesiec minut oddechu");
 
-        createLog(savedUser, reading, ActivityEventType.HABIT_CREATED, "Created habit: Read 20 pages");
-        createLog(savedUser, running, ActivityEventType.HABIT_CREATED, "Created habit: Morning run");
-        createLog(savedUser, water, ActivityEventType.HABIT_CREATED, "Created habit: Drink 2L water");
-        createLog(savedUser, planning, ActivityEventType.HABIT_CREATED, "Created habit: Weekly planning");
-        createLog(savedUser, meditation, ActivityEventType.HABIT_UPDATED, "Updated habit: Meditation");
-        createLog(savedUser, reading, ActivityEventType.HABIT_COMPLETED, "Completed habit: Read 20 pages on " + today);
-        createLog(savedUser, water, ActivityEventType.HABIT_COMPLETED, "Completed habit: Drink 2L water on " + today);
+        createLog(savedUser, reading, ActivityEventType.HABIT_CREATED, "Utworzono habit: Czytanie przed snem");
+        createLog(savedUser, walking, ActivityEventType.HABIT_CREATED, "Utworzono habit: Poranny spacer");
+        createLog(savedUser, water, ActivityEventType.HABIT_CREATED, "Utworzono habit: Woda rano");
+        createLog(savedUser, meditation, ActivityEventType.HABIT_CREATED, "Utworzono habit: Wieczorna medytacja");
+        createLog(savedUser, meditation, ActivityEventType.HABIT_UPDATED, "Wstrzymano habit: Wieczorna medytacja. Powod: bol kolana");
+        createLog(savedUser, reading, ActivityEventType.HABIT_COMPLETED, "Wykonano habit: Czytanie przed snem wczoraj");
+        createLog(savedUser, walking, ActivityEventType.HABIT_COMPLETED, "Wykonano habit: Poranny spacer wczoraj");
+    }
+
+    private void resetDatabase() {
+        entityManager.createNativeQuery(
+                "TRUNCATE TABLE activity_logs, habit_completions, habits, users RESTART IDENTITY CASCADE"
+        ).executeUpdate();
     }
 
     private Habit createHabit(
@@ -149,14 +139,20 @@ public class DemoDataSeeder implements CommandLineRunner {
         return habitRepository.save(habit);
     }
 
-    private void addCompletions(Habit habit, LocalDate start, LocalDate end, Predicate<LocalDate> shouldComplete) {
+    private void addCompletions(
+            Habit habit,
+            LocalDate start,
+            LocalDate end,
+            Predicate<LocalDate> shouldComplete,
+            String note
+    ) {
         LocalDate cursor = start;
         while (!cursor.isAfter(end)) {
             if (shouldComplete.test(cursor)) {
                 HabitCompletion completion = new HabitCompletion();
                 completion.setHabit(habit);
                 completion.setCompletionDate(cursor);
-                completion.setNote("Seeded demo completion");
+                completion.setNote(note);
                 completionRepository.save(completion);
             }
             cursor = cursor.plusDays(1);
