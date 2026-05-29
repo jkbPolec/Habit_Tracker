@@ -7,11 +7,19 @@ Habit Tracker to aplikacja webowa do sledzenia nawykow. Uzytkownik moze zalozyc 
 Glowne funkcje:
 
 - rejestracja i logowanie
+<img width="800" height="450" alt="ezgif-144db777b4d79c56" src="https://github.com/user-attachments/assets/457f7a63-3285-4450-9c2a-86dfbab4ed05" />
+
 - JWT i dostep tylko do wlasnych danych
 - dodawanie, edycja, usuwanie i przegladanie habitow
+<img width="800" height="450" alt="ezgif-1adab7da29752ce6" src="https://github.com/user-attachments/assets/3335f6f4-4347-4f0e-9bdd-6ac95f3593e5" />
+
 - oznaczanie habitu jako wykonanego dzisiaj
+<img width="800" height="450" alt="ezgif-1c2ecc6307350291" src="https://github.com/user-attachments/assets/2d26966b-1a3c-479b-9c16-9f1d1facd4b6" />
+
 - cofanie wykonania
 - current streak i best streak
+<img width="800" height="450" alt="ezgif-1c5b974fa35ee642" src="https://github.com/user-attachments/assets/e2d82cc4-41f3-4bf2-98ba-6b3f4802285d" />
+
 - statystyki dashboardu
 - historia aktywnosci zapisywana przez Spring Events
 
